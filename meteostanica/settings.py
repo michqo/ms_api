@@ -21,6 +21,7 @@ env = environ.Env(
     DJANGO_SECRET_KEY=(str, get_random_secret_key()),
     DJANGO_DEBUG=(bool, False),
     DJANGO_TRUSTED_ORIGIN=(str, "http://localhost"),
+    DJANGO_PAGINATION_LIMIT=(int, 10),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,6 +42,8 @@ DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [env("DJANGO_TRUSTED_ORIGIN")]
+
+APPEND_SLASH = False
 
 
 # Application definition
@@ -126,7 +129,7 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
-USE_I18N = True
+USE_I18N = False
 
 USE_TZ = True
 
@@ -150,7 +153,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': env("DJANGO_PAGINATION_LIMIT"),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',  # drf-spectacular settings
 }
 
