@@ -1,7 +1,7 @@
-from django.urls import path
-from .views import MeasurementDetail, MeasurementList
+from rest_framework.routers import DefaultRouter
+from .views import MeasurementViewSet
 
-urlpatterns = [
-    path('measurements', MeasurementList.as_view(), name='measurement-list'),
-    path('measurements/<int:pk>', MeasurementDetail.as_view(), name='measurement-detail'),
-]
+router = DefaultRouter()
+router.register(r'measurements', MeasurementViewSet)
+
+urlpatterns = router.urls
