@@ -43,7 +43,7 @@ ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [env("DJANGO_TRUSTED_ORIGIN")]
 
-APPEND_SLASH = False
+APPEND_SLASH = True
 
 
 # Application definition
