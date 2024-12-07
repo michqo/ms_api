@@ -1,7 +1,7 @@
 from django.db import models
 
 class Measurement(models.Model):
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
     temperature = models.FloatField()
     humidity = models.FloatField()
     pressure = models.FloatField()

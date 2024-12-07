@@ -1,18 +1,22 @@
 import json
+import os
 import requests
 from datetime import datetime
 import random
 import sys
 import dataclasses
 from dataclasses import dataclass
+from dotenv import load_dotenv
 
-URL = "http://localhost:8000"
+load_dotenv()
+
+URL = os.getenv('URL', 'http://localhost:8000')
 ROUTE = "{}/api/measurements/".format(URL)
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMzMzk2MjQ5LCJpYXQiOjE3MzMzMDk4NDksImp0aSI6ImZmZTNiMWI1NjkwYzQ3ZjRhYThlYzhjOTU5M2E1YTgwIiwidXNlcl9pZCI6MX0.3-gWhwlRF9rColt6QxWzAPwYVUP3evbIqSiuXl8PlDs"
+TOKEN = f"JWT {os.getenv('TOKEN')}"
 
 HEADERS = {
     'Content-type': 'application/json',
-    'Authorization': f"JWT {TOKEN}"
+    'Authorization': TOKEN
 }
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -49,6 +53,7 @@ def main():
         data.humidity = round(humidity, 1)
         data.timestamp = data.timestamp.replace(hour=i)
         temps.append(dataclasses.asdict(data))
+
 
     for temp in temps:
         r = requests.post(ROUTE, headers=HEADERS, data=json.dumps(temp, cls=DateTimeEncoder))
