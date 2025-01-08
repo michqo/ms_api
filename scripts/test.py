@@ -22,7 +22,8 @@ HEADERS = {
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):
-            return o.isoformat() + 'Z'
+            local_time = o.astimezone()
+            return local_time.isoformat()
         return super().default(o)
 
 @dataclass
