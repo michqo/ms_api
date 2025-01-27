@@ -6,6 +6,7 @@ class MeasurementFilter(filters.FilterSet):
         model = Measurement
         fields = {
             'created_at': ['lt', 'gt'],
+            'timestamp': ['lt', 'gt'],
             'temperature': ['lt', 'gt'],
             'humidity': ['lt', 'gt'],
             'pressure': ['lt', 'gt'],
