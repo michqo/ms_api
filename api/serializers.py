@@ -1,6 +1,6 @@
 from djoser.serializers import UserSerializer, UserCreateSerializer as BaseUserSerializer
 from rest_framework import serializers
-from .models import Measurement
+from .models import Measurement, ForecastData
 
 class UserCreateSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
@@ -13,4 +13,9 @@ class CurrentUserSerializer(UserSerializer):
 class MeasurementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Measurement
+        fields = '__all__'
+
+class ForecastDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForecastData
         fields = '__all__'

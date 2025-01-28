@@ -22,6 +22,7 @@ env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_TRUSTED_ORIGIN=(str, "http://localhost"),
     DJANGO_PAGINATION_LIMIT=(int, 10),
+    METEOBLUE_API_KEY=(str, ""),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,6 +39,8 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DJANGO_DEBUG")
+
+METEOBLUE_API_KEY = env("METEOBLUE_API_KEY")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -100,6 +103,16 @@ WSGI_APPLICATION = 'meteostanica.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config()
+}
+
+
+# Caching
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
 }
 
 
