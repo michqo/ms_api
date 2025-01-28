@@ -1,4 +1,4 @@
-# MS API Project
+# Meteostanica
 This project is a Django REST Framework application designed to provide a robust and scalable API.
 
 ## Features
@@ -9,8 +9,7 @@ This project is a Django REST Framework application designed to provide a robust
 
 ## Requirements
 
-- Python 3.x
-- Django 3.x
+- Python 3.12
 - Django REST Framework
 - Poetry
 
