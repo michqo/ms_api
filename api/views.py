@@ -61,6 +61,7 @@ class ForecastViewSet(viewsets.ViewSet):
                 temperature_mean=data['data_day']['temperature_mean'],
                 temperature_max=data['data_day']['temperature_max'],
                 temperature_min=data['data_day']['temperature_min'],
+                relativehumidity_mean=data['data_day']['relativehumidity_mean'],
                 windspeed_mean=data['data_day']['windspeed_mean'],
                 sealevelpressure_mean=data['data_day']['sealevelpressure_mean'],
                 precipitation_hours=data['data_day']['precipitation_hours'],
