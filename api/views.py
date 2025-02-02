@@ -58,6 +58,7 @@ class ForecastViewSet(viewsets.ViewSet):
                 temperature_instant=data['data_day']['temperature_instant'],
                 precipitation=data['data_day']['precipitation'],
                 predictability=data['data_day']['predictability'],
+                temperature_mean=data['data_day']['temperature_mean'],
                 temperature_max=data['data_day']['temperature_max'],
                 temperature_min=data['data_day']['temperature_min'],
                 windspeed_mean=data['data_day']['windspeed_mean'],

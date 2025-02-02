@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 class Measurement(models.Model):
     timestamp = models.DateTimeField()
@@ -19,18 +20,20 @@ class ForecastData(models.Model):
     modelrun_utc = models.DateTimeField()
     utc_timeoffset = models.FloatField()
     generation_time_ms = models.FloatField()
-    time = models.JSONField()
-    temperature_instant = models.JSONField()
-    temperature_max = models.JSONField()
-    temperature_min = models.JSONField()
-    windspeed_mean = models.JSONField()
-    sealevelpressure_mean = models.JSONField()
-    precipitation = models.JSONField()
-    precipitation_hours = models.JSONField()
-    predictability = models.JSONField()
-    pictocode = models.JSONField()
-    winddirection = models.JSONField()
-    uvindex = models.JSONField()
+    time = ArrayField(models.TextField(), default=list)
+    temperature_mean = ArrayField(models.FloatField(), default=list)
+    temperature_instant = ArrayField(models.FloatField(), default=list)
+    temperature_max = ArrayField(models.FloatField(), default=list)
+    temperature_min = ArrayField(models.FloatField(), default=list)
+    relativehumidity_mean = ArrayField(models.IntegerField(), default=list)
+    windspeed_mean = ArrayField(models.FloatField(), default=list)
+    sealevelpressure_mean = ArrayField(models.IntegerField(), default=list)
+    precipitation = ArrayField(models.FloatField(), default=list)
+    precipitation_hours = ArrayField(models.FloatField(), default=list)
+    predictability = ArrayField(models.FloatField(), default=list)
+    pictocode = ArrayField(models.IntegerField(), default=list)
+    winddirection = ArrayField(models.IntegerField(), default=list)
+    uvindex = ArrayField(models.IntegerField(), default=list)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
