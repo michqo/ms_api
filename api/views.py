@@ -31,8 +31,8 @@ class ForecastViewSet(viewsets.ViewSet):
             return Response(cached_data)
 
         # Check if there is valid data in the database
-        one_week_ago = timezone.now() - timedelta(days=7)
-        valid_data = ForecastData.objects.filter(created_at__gte=one_week_ago).first()
+        one_day_ago = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        valid_data = ForecastData.objects.filter(created_at__gte=one_day_ago).first()
 
         if valid_data:
             serialized_data = ForecastDataSerializer(valid_data).data
