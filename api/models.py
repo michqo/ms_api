@@ -25,6 +25,7 @@ class ForecastData(models.Model):
     temperature_instant = ArrayField(models.FloatField(), default=list)
     temperature_max = ArrayField(models.FloatField(), default=list)
     temperature_min = ArrayField(models.FloatField(), default=list)
+    felttemperature_mean = ArrayField(models.FloatField(), default=list)
     relativehumidity_mean = ArrayField(models.IntegerField(), default=list)
     windspeed_mean = ArrayField(models.FloatField(), default=list)
     sealevelpressure_mean = ArrayField(models.IntegerField(), default=list)
