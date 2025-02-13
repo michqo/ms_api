@@ -1,7 +1,19 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import User
+
+class Station(models.Model):
+    name = models.CharField(max_length=255)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class Measurement(models.Model):
+    station = models.ForeignKey(Station, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
     temperature = models.FloatField()
     humidity = models.FloatField()
@@ -10,7 +22,7 @@ class Measurement(models.Model):
     wind_speed = models.FloatField()
     wind_direction = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"Measured {self.temperature} at {self.created_at}"
 

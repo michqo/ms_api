@@ -13,6 +13,7 @@ load_dotenv()
 URL = os.getenv('URL', 'http://localhost:8000')
 ROUTE = "{}/api/measurements/".format(URL)
 TOKEN = f"JWT {os.getenv('TOKEN')}"
+STATION_ID = os.getenv('STATION_ID') or 1
 
 HEADERS = {
     'Content-type': 'application/json',
@@ -29,6 +30,7 @@ class DateTimeEncoder(json.JSONEncoder):
 @dataclass
 class Temp:
     timestamp: datetime
+    station: int = int(STATION_ID)
     temperature: float = 0.0
     humidity: float = 0.0
     pressure: float = 0.0
