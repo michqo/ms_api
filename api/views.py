@@ -17,9 +17,12 @@ class StationViewSet(viewsets.ModelViewSet):
     queryset = Station.objects.all()
     serializer_class = StationSerializer
 
+    def get_queryset(self):
+        return Station.objects.filter(user_id=self.request.user)
+
 class MeasurementViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
     filterset_class = MeasurementFilter

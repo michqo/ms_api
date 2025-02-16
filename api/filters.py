@@ -5,6 +5,7 @@ class MeasurementFilter(filters.FilterSet):
     class Meta:
         model = Measurement
         fields = {
+            'station': ['exact'],
             'created_at': ['lt', 'gt'],
             'timestamp': ['lt', 'gt'],
             'temperature': ['lt', 'gt'],
