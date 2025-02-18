@@ -1,4 +1,4 @@
-from api.filters import MeasurementFilter
+from api.filters import MeasurementFilter, StationFilter
 from api.permissions import IsOwner
 from .models import Measurement, ForecastData, Station
 from .serializers import MeasurementSerializer, ForecastDataSerializer, StationSerializer
@@ -10,15 +10,48 @@ from django.utils import timezone
 import requests
 from django.core.cache import cache
 from django.conf import settings
+import math
 
 class StationViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Station.objects.all()
     serializer_class = StationSerializer
+    filterset_class = StationFilter
 
-    def get_queryset(self):
-        return Station.objects.filter(user_id=self.request.user)
+    def convert_to_dms(self, lat, lon):
+        lat_deg = int(lat)
+        lat_min = int((abs(lat) - abs(lat_deg)) * 60)
+        lat_sec = (abs(lat) - abs(lat_deg) - lat_min / 60) * 3600
+        lat_direction = "N" if lat >= 0 else "S"
+        lon_deg = int(lon)
+        lon_min = int((abs(lon) - abs(lon_deg)) * 60)
+        lon_sec = (abs(lon) - abs(lon_deg) - lon_min / 60) * 3600
+        lon_direction = "E" if lon >= 0 else "W"
+        return f"{abs(lat_deg)}°{lat_min}'{lat_sec:.1f}\"{lat_direction} {abs(lon_deg)}°{lon_min}'{lon_sec:.1f}\"{lon_direction}"
+
+    def update_city_name(self, instance):
+        query = self.convert_to_dms(instance.latitude, instance.longitude)
+        response = requests.get(
+            "https://www.meteoblue.com/en/server/search/query3",
+            params={"apikey": settings.METEOBLUE_API_KEY, "query": query},
+        )
+        if response.status_code == 200:
+            data = response.json()
+            instance.city_name = data.get("city_name", "")
+            results = data.get("results", [])
+            if results:
+                instance.city_name = results[0].get("name", "")
+            else:
+                instance.city_name = ""
+            instance.save()
+        return instance
+
+    def perform_create(self, serializer):
+        self.update_city_name(serializer.save())
+
+    def perform_update(self, serializer):
+        self.update_city_name(serializer.save())
 
 class MeasurementViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]

@@ -13,6 +13,7 @@ class CurrentUserSerializer(UserSerializer):
 
 class StationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault())
+    city_name = serializers.CharField(read_only=True)
     
     class Meta:
         model = Station

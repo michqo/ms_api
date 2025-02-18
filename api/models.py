@@ -6,6 +6,7 @@ class Station(models.Model):
     name = models.CharField(max_length=255)
     latitude = models.FloatField()
     longitude = models.FloatField()
+    city_name = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 

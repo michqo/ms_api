@@ -1,5 +1,22 @@
 from django_filters import rest_framework as filters
-from .models import Measurement
+from .models import Measurement, Station
+
+class StationFilter(filters.FilterSet):
+    class Meta:
+        model = Station
+        fields = {
+            'name': ['exact'],
+            'latitude': ['lt', 'gt'],
+            'longitude': ['lt', 'gt'],
+            'city_name': ['exact'],
+            'created_at': ['lt', 'gt'],
+        }
+
+    @property
+    def qs(self):
+        parent = super().qs
+        user = getattr(self.request, 'user', None)
+        return parent.filter(user=user)
 
 class MeasurementFilter(filters.FilterSet):
     class Meta:
