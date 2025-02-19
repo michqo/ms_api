@@ -30,6 +30,7 @@ class Measurement(models.Model):
 class ForecastData(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
+    city_name = models.TextField()
     modelrun_utc = models.DateTimeField()
     utc_timeoffset = models.FloatField()
     generation_time_ms = models.FloatField()

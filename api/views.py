@@ -10,16 +10,8 @@ from django.utils import timezone
 import requests
 from django.core.cache import cache
 from django.conf import settings
-import math
 
-class StationViewSet(viewsets.ModelViewSet):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsOwner]
-    queryset = Station.objects.all()
-    serializer_class = StationSerializer
-    filterset_class = StationFilter
-
-    def convert_to_dms(self, lat, lon):
+def convert_to_dms(lat, lon):
         lat_deg = int(lat)
         lat_min = int((abs(lat) - abs(lat_deg)) * 60)
         lat_sec = (abs(lat) - abs(lat_deg) - lat_min / 60) * 3600
@@ -30,21 +22,30 @@ class StationViewSet(viewsets.ModelViewSet):
         lon_direction = "E" if lon >= 0 else "W"
         return f"{abs(lat_deg)}°{lat_min}'{lat_sec:.1f}\"{lat_direction} {abs(lon_deg)}°{lon_min}'{lon_sec:.1f}\"{lon_direction}"
 
-    def update_city_name(self, instance):
-        query = self.convert_to_dms(instance.latitude, instance.longitude)
-        response = requests.get(
+def coords_to_city_name(lat, lon):
+    query = convert_to_dms(lat, lon)
+    response = requests.get(
             "https://www.meteoblue.com/en/server/search/query3",
             params={"apikey": settings.METEOBLUE_API_KEY, "query": query},
         )
-        if response.status_code == 200:
-            data = response.json()
-            instance.city_name = data.get("city_name", "")
-            results = data.get("results", [])
-            if results:
-                instance.city_name = results[0].get("name", "")
-            else:
-                instance.city_name = ""
-            instance.save()
+    if response.status_code == 200:
+        data = response.json()
+        results = data.get("results", [])
+        if results:
+            return results[0].get("name", "")
+        else:
+            return ""
+
+class StationViewSet(viewsets.ModelViewSet):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsOwner]
+    queryset = Station.objects.all()
+    serializer_class = StationSerializer
+    filterset_class = StationFilter
+
+    def update_city_name(self, instance):
+        instance.city_name = coords_to_city_name(instance.latitude, instance.longitude)
+        instance.save()
         return instance
 
     def perform_create(self, serializer):
@@ -65,33 +66,47 @@ class ForecastViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        cache_key = 'meteoblue_data'
-        cached_data = cache.get(cache_key)
+        station_id = request.query_params.get("station")
+        if not station_id:
+            return Response({"error": "station query parameter is required"}, status=400)
+        try:
+            station = Station.objects.get(pk=station_id)
+        except Station.DoesNotExist:
+            return Response({"error": "Station not found"}, status=404)
 
+        cache_key = f'meteoblue_data_{station_id}'
+        cached_data = cache.get(cache_key)
         if cached_data:
             return Response(cached_data)
 
-        # Check if there is valid data in the database
+        # Check if there is valid data in the database for the station's coordinates
         one_day_ago = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        valid_data = ForecastData.objects.filter(created_at__gte=one_day_ago).first()
-
+        valid_data = ForecastData.objects.filter(
+            created_at__gte=one_day_ago,
+            latitude=station.latitude,
+            longitude=station.longitude,
+        ).first()
         if valid_data:
             serialized_data = ForecastDataSerializer(valid_data).data
             cache.set(cache_key, serialized_data, timeout=3600)
             return Response(serialized_data)
 
-        # Fetch new data from the API
+        # Fetch new data from the API using the station's latitude and longitude
         params = {
-            'lat': '48.14646',
-            'lon': '17.100002',
+            'lat': station.latitude,
+            'lon': station.longitude,
             'apikey': settings.METEOBLUE_API_KEY,
         }
         response = requests.get('https://my.meteoblue.com/packages/basic-day', params=params)
         if response.status_code == 200:
             data = response.json()
+            lat = data['metadata']['latitude']
+            lon = data['metadata']['longitude']
+            city_name = coords_to_city_name(lat, lon)
             meteoblue_data = ForecastData.objects.create(
-                latitude=data['metadata']['latitude'],
-                longitude=data['metadata']['longitude'],
+                latitude=lat,
+                longitude=lon,
+                city_name=city_name,
                 modelrun_utc=data['metadata']['modelrun_utc'],
                 utc_timeoffset=data['metadata']['utc_timeoffset'],
                 generation_time_ms=data['metadata']['generation_time_ms'],
