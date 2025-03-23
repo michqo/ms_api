@@ -6,6 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from django.utils import timezone
 import requests
 from django.core.cache import cache
@@ -60,6 +61,14 @@ class MeasurementViewSet(viewsets.ModelViewSet):
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
     filterset_class = MeasurementFilter
+
+    @action(detail=False, methods=['delete'], url_path='bulk-delete')
+    def bulk_delete(self, request):
+        f = MeasurementFilter(request.query_params, queryset=Measurement.objects.all())
+        if not f.is_valid():
+            return Response(f.errors, status=400)
+        f.qs.delete()
+        return Response({"message": "Measurements for the station have been deleted"})
 
 class ForecastViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]
