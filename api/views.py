@@ -7,6 +7,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 import requests
 from django.core.cache import cache
@@ -55,12 +56,18 @@ class StationViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         self.update_city_name(serializer.save())
 
+class ForecastPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 30
+
 class MeasurementViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
     filterset_class = MeasurementFilter
+    pagination_class = ForecastPagination
 
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
@@ -69,6 +76,23 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             return Response(f.errors, status=400)
         f.qs.delete()
         return Response({"message": "Measurements for the station have been deleted"})
+    
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest_measurement(self, request):
+        station_id = request.query_params.get("station")
+        if not station_id:
+            return Response({"error": "station query parameter is required"}, status=400)
+        try:
+            station = Station.objects.get(pk=station_id)
+        except Station.DoesNotExist:
+            return Response({"error": "Station not found"}, status=404)
+
+        latest_measurement = Measurement.objects.filter(station=station).order_by('-timestamp').first()
+        if not latest_measurement:
+            return Response({"error": "No measurements found for this station"}, status=404)
+
+        serializer = MeasurementSerializer(latest_measurement)
+        return Response(serializer.data)
 
 class ForecastViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]
