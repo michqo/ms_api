@@ -1,7 +1,7 @@
 from api.filters import MeasurementFilter, StationFilter
 from api.permissions import IsOwner
-from .models import Measurement, ForecastData, Station
-from .serializers import MeasurementSerializer, ForecastDataSerializer, StationSerializer
+from .models import Measurement, ForecastData, Station, MeasurementStat  # added MeasurementStat
+from .serializers import MeasurementSerializer, ForecastDataSerializer, StationSerializer, MeasurementStatSerializer  # added MeasurementStatSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +12,8 @@ from django.utils import timezone
 import requests
 from django.core.cache import cache
 from django.conf import settings
+from django.db.models import Avg
+from datetime import datetime, time, timedelta  # added timedelta
 
 def convert_to_dms(lat, lon):
         lat_deg = int(lat)
@@ -93,6 +95,54 @@ class MeasurementViewSet(viewsets.ModelViewSet):
 
         serializer = MeasurementSerializer(latest_measurement)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='stats')
+    def stats(self, request):
+        station_id = request.query_params.get("station")
+        timestamp_gt = request.query_params.get("timestamp__gt")
+        timestamp_lt = request.query_params.get("timestamp__lt")
+        if not station_id or not timestamp_gt or not timestamp_lt:
+            return Response({"error": "station, created_at__gt and created_at__lt query parameters are required"}, status=400)
+        try:
+            station = Station.objects.get(pk=station_id)
+        except Station.DoesNotExist:
+            return Response({"error": "Station not found"}, status=404)
+        try:
+            start_date = datetime.strptime(timestamp_gt, "%Y-%m-%d").date()
+            end_date = datetime.strptime(timestamp_lt, "%Y-%m-%d").date()
+        except ValueError:
+            return Response({"error": "Dates must be formatted as YYYY-MM-DD"}, status=400)
+        if start_date > end_date:
+            return Response({"error": "created_at__gt must be before or equal to created_at__lt"}, status=400)
+        if (end_date - start_date).days > 7:
+            return Response({"error": "The date range cannot be more than 7 days apart"}, status=400)
+        stats_list = []
+        current_date = start_date
+        while current_date <= end_date:
+            start = datetime.combine(current_date, time.min)
+            end = datetime.combine(current_date, time.max)
+            measurements = Measurement.objects.filter(station=station, timestamp__gte=start, timestamp__lte=end)
+            if measurements.exists():
+                stat, created = MeasurementStat.objects.get_or_create(station=station, date=current_date)
+                if created:
+                    aggregates = measurements.aggregate(
+                        temperature=Avg("temperature"),
+                        humidity=Avg("humidity"),
+                        pressure=Avg("pressure"),
+                        rain=Avg("rain"),
+                        wind_speed=Avg("wind_speed"),
+                        wind_direction=Avg("wind_direction")
+                    )
+                    stat.temperature = aggregates["temperature"]
+                    stat.humidity = aggregates["humidity"]
+                    stat.pressure = aggregates["pressure"]
+                    stat.rain = aggregates["rain"]
+                    stat.wind_speed = aggregates["wind_speed"]
+                    stat.wind_direction = aggregates["wind_direction"]
+                    stat.save()
+                stats_list.append(stat)
+            current_date += timedelta(days=1)
+        return Response(MeasurementStatSerializer(stats_list, many=True).data)
 
 class ForecastViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]

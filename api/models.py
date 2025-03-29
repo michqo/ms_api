@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
+from django.db.models import Avg
+from django.utils import timezone
 
 class Station(models.Model):
     name = models.CharField(max_length=255)
@@ -53,3 +55,19 @@ class ForecastData(models.Model):
 
     def __str__(self):
         return f"Forecast data at {self.created_at}"
+
+class MeasurementStat(models.Model):
+    station = models.ForeignKey('Station', on_delete=models.CASCADE)
+    date = models.DateField()
+    temperature = models.FloatField(null=True, blank=True)
+    humidity = models.FloatField(null=True, blank=True)
+    pressure = models.FloatField(null=True, blank=True)
+    rain = models.FloatField(null=True, blank=True)
+    wind_speed = models.FloatField(null=True, blank=True)
+    wind_direction = models.FloatField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = (("station", "date"),)
+
+    def __str__(self):
+        return f"Stats for {self.station} on {self.date}"

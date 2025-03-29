@@ -1,7 +1,7 @@
 from djoser.serializers import UserSerializer, UserCreateSerializer as BaseUserSerializer
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Measurement, ForecastData, Station
+from .models import Measurement, ForecastData, Station, MeasurementStat
 
 class UserCreateSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
@@ -35,4 +35,9 @@ class MeasurementSerializer(serializers.ModelSerializer):
 class ForecastDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = ForecastData
+        fields = '__all__'
+
+class MeasurementStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MeasurementStat
         fields = '__all__'
