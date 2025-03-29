@@ -117,8 +117,8 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         if (end_date - start_date).days > 7:
             return Response({"error": "The date range cannot be more than 7 days apart"}, status=400)
         stats_list = []
-        current_date = start_date
-        while current_date <= end_date:
+        current_date = end_date
+        while current_date >= start_date:
             start = datetime.combine(current_date, time.min)
             end = datetime.combine(current_date, time.max)
             measurements = Measurement.objects.filter(station=station, timestamp__gte=start, timestamp__lte=end)
@@ -126,12 +126,12 @@ class MeasurementViewSet(viewsets.ModelViewSet):
                 stat, created = MeasurementStat.objects.get_or_create(station=station, date=current_date)
                 if created:
                     aggregates = measurements.aggregate(
-                        temperature=Avg("temperature"),
-                        humidity=Avg("humidity"),
-                        pressure=Avg("pressure"),
-                        rain=Avg("rain"),
-                        wind_speed=Avg("wind_speed"),
-                        wind_direction=Avg("wind_direction")
+                    temperature=Avg("temperature"),
+                    humidity=Avg("humidity"),
+                    pressure=Avg("pressure"),
+                    rain=Avg("rain"),
+                    wind_speed=Avg("wind_speed"),
+                    wind_direction=Avg("wind_direction")
                     )
                     stat.temperature = aggregates["temperature"]
                     stat.humidity = aggregates["humidity"]
@@ -141,7 +141,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
                     stat.wind_direction = aggregates["wind_direction"]
                     stat.save()
                 stats_list.append(stat)
-            current_date += timedelta(days=1)
+            current_date -= timedelta(days=1)
         return Response(MeasurementStatSerializer(stats_list, many=True).data)
 
 class ForecastViewSet(viewsets.ViewSet):
