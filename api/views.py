@@ -117,6 +117,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         if (end_date - start_date).days > 7:
             return Response({"error": "The date range cannot be more than 7 days apart"}, status=400)
         stats_list = []
+        today = timezone.localdate()
         current_date = end_date
         while current_date >= start_date:
             start = datetime.combine(current_date, time.min)
@@ -124,21 +125,15 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             measurements = Measurement.objects.filter(station=station, timestamp__gte=start, timestamp__lte=end)
             if measurements.exists():
                 stat, created = MeasurementStat.objects.get_or_create(station=station, date=current_date)
-                if created:
+                if current_date == today or created:
                     aggregates = measurements.aggregate(
-                    temperature=Avg("temperature"),
-                    humidity=Avg("humidity"),
-                    pressure=Avg("pressure"),
-                    rain=Avg("rain"),
-                    wind_speed=Avg("wind_speed"),
-                    wind_direction=Avg("wind_direction")
+                        temperature=Avg("temperature"),
+                        humidity=Avg("humidity"),
+                        pressure=Avg("pressure"),
                     )
                     stat.temperature = aggregates["temperature"]
                     stat.humidity = aggregates["humidity"]
                     stat.pressure = aggregates["pressure"]
-                    stat.rain = aggregates["rain"]
-                    stat.wind_speed = aggregates["wind_speed"]
-                    stat.wind_direction = aggregates["wind_direction"]
                     stat.save()
                 stats_list.append(stat)
             current_date -= timedelta(days=1)
