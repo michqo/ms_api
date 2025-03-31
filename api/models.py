@@ -59,7 +59,7 @@ class MeasurementStat(models.Model):
     temperature = models.FloatField(null=True, blank=True)
     humidity = models.FloatField(null=True, blank=True)
     pressure = models.FloatField(null=True, blank=True)
-    date = models.DateField()
+    date = models.DateTimeField()  # changed from DateField to DateTimeField
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

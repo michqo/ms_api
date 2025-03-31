@@ -102,18 +102,20 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         timestamp_gt = request.query_params.get("timestamp__gt")
         timestamp_lt = request.query_params.get("timestamp__lt")
         if not station_id or not timestamp_gt or not timestamp_lt:
-            return Response({"error": "station, created_at__gt and created_at__lt query parameters are required"}, status=400)
+            return Response({"error": "station, timestamp__gt and timestamp__lt query parameters are required"}, status=400)
+        try:
+            start_dt = datetime.strptime(timestamp_gt, "%Y-%m-%d")
+            end_dt = datetime.strptime(timestamp_lt, "%Y-%m-%d")
+        except ValueError:
+            return Response({"error": "Dates must be formatted as YYYY-MM-DD"}, status=400)
         try:
             station = Station.objects.get(pk=station_id)
         except Station.DoesNotExist:
             return Response({"error": "Station not found"}, status=404)
-        try:
-            start_date = datetime.strptime(timestamp_gt, "%Y-%m-%d").date()
-            end_date = datetime.strptime(timestamp_lt, "%Y-%m-%d").date()
-        except ValueError:
-            return Response({"error": "Dates must be formatted as YYYY-MM-DD"}, status=400)
+        start_date = start_dt.date()
+        end_date = end_dt.date()
         if start_date > end_date:
-            return Response({"error": "created_at__gt must be before or equal to created_at__lt"}, status=400)
+            return Response({"error": "timestamp__gt must be before or equal to timestamp__lt"}, status=400)
         if (end_date - start_date).days > 7:
             return Response({"error": "The date range cannot be more than 7 days apart"}, status=400)
         stats_list = []
@@ -123,13 +125,15 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             start = datetime.combine(current_date, time.min)
             end = datetime.combine(current_date, time.max)
             measurements = Measurement.objects.filter(station=station, timestamp__gte=start, timestamp__lte=end)
-            if measurements.exists():
-                stat, created = MeasurementStat.objects.get_or_create(station=station, date=current_date)
+            if measurements.count() > 1:
+                stat, created = MeasurementStat.objects.get_or_create(
+                    station=station, date=datetime.combine(current_date, time.min)
+                )
                 if current_date == today or created:
                     aggregates = measurements.aggregate(
-                        temperature=Avg("temperature"),
-                        humidity=Avg("humidity"),
-                        pressure=Avg("pressure"),
+                    temperature=Avg("temperature"),
+                    humidity=Avg("humidity"),
+                    pressure=Avg("pressure"),
                     )
                     stat.temperature = aggregates["temperature"]
                     stat.humidity = aggregates["humidity"]
