@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 URL = os.getenv('URL', 'http://localhost:8000')
-ROUTE = "{}/api/measurements/".format(URL)
+ROUTE = "{}/api/measurements/bulk-create/".format(URL)
 TOKEN = f"JWT {os.getenv('TOKEN')}"
 STATION_ID = os.getenv('STATION_ID') or 1
 
@@ -58,9 +58,8 @@ def main():
         temps.append(dataclasses.asdict(data))
 
 
-    for temp in temps:
-        r = requests.post(ROUTE, headers=HEADERS, data=json.dumps(temp, cls=DateTimeEncoder))
-        print(r.text)
+    r = requests.post(ROUTE, headers=HEADERS, data=json.dumps(temps, cls=DateTimeEncoder))
+    print(r.text)
 
 if __name__ == "__main__":
     main()

@@ -71,6 +71,8 @@ class MeasurementViewSet(viewsets.ModelViewSet):
     filterset_class = MeasurementFilter
     pagination_class = ForecastPagination
 
+    
+
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
         f = MeasurementFilter(request.query_params, queryset=Measurement.objects.all())
@@ -78,7 +80,15 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             return Response(f.errors, status=400)
         f.qs.delete()
         return Response({"message": "Measurements for the station have been deleted"})
-    
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request):
+        serializer = MeasurementSerializer(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
     @action(detail=False, methods=['get'], url_path='latest')
     def latest_measurement(self, request):
         station_id = request.query_params.get("station")
