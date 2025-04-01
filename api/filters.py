@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from .models import Measurement, Station
+from .models import Measurement, Station, MeasurementStat
 
 class StationFilter(filters.FilterSet):
     class Meta:
@@ -31,4 +31,12 @@ class MeasurementFilter(filters.FilterSet):
             'rain': ['lt', 'gt'],
             'wind_speed': ['lt', 'gt'],
             'wind_direction': ['lt', 'gt'],
+        }
+
+class MeasurementStatFilter(filters.FilterSet):
+    class Meta:
+        model = MeasurementStat
+        fields = {
+            'station': ['exact'],
+            'date': ['exact', 'lt', 'gt'],
         }

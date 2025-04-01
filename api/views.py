@@ -1,4 +1,4 @@
-from api.filters import MeasurementFilter, StationFilter
+from api.filters import MeasurementFilter, StationFilter, MeasurementStatFilter  # added MeasurementStatFilter
 from api.permissions import IsOwner
 from .models import Measurement, ForecastData, Station, MeasurementStat  # added MeasurementStat
 from .serializers import MeasurementSerializer, ForecastDataSerializer, StationSerializer, MeasurementStatSerializer  # added MeasurementStatSerializer
@@ -79,7 +79,9 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         if not f.is_valid():
             return Response(f.errors, status=400)
         f.qs.delete()
-        return Response({"message": "Measurements for the station have been deleted"})
+        f_stats = MeasurementStatFilter(request.query_params, queryset=MeasurementStat.objects.all())
+        f_stats.qs.delete()
+        return Response({"message": "Measurements and their stats for the station have been deleted"})
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request):
