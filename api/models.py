@@ -15,7 +15,7 @@ class Station(models.Model):
 
 class Measurement(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(auto_now_add=True)
     temperature = models.FloatField()
     humidity = models.FloatField()
     pressure = models.FloatField()
