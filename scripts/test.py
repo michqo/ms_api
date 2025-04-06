@@ -6,18 +6,34 @@ import random
 import sys
 import dataclasses
 from dataclasses import dataclass
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 
-load_dotenv()
+dotenv_path = os.path.join(os.getcwd(), ".env")
+load_dotenv(dotenv_path)
 
 URL = os.getenv('URL', 'http://localhost:8000')
-ROUTE = "{}/api/measurements/bulk-create/".format(URL)
-TOKEN = f"JWT {os.getenv('TOKEN')}"
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
 STATION_ID = os.getenv('STATION_ID') or 1
+TOKEN = os.getenv("TOKEN")
 
+CREATE_ROUTE = f"{URL}/api/measurements/bulk-create/"
+AUTH_URL = f"{URL}/auth/jwt/create"
+
+def login(relogin: bool = False):
+    if TOKEN and not relogin:
+        return f"JWT {TOKEN}"
+
+    payload = {"username": USERNAME, "password": PASSWORD}
+    response = requests.post(AUTH_URL, json=payload)
+    response.raise_for_status()
+    token = response.json()["access"]
+    set_key(dotenv_path, "TOKEN", token)
+    return f"JWT {token}"
+
+# Initialize TOKEN and HEADERS later after login
 HEADERS = {
     'Content-type': 'application/json',
-    'Authorization': TOKEN
 }
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -43,11 +59,13 @@ data = Temp(now)
 temps: list[dict] = []
 
 def main():
-    if len(sys.argv) > 1:
-        if sys.argv[1].isdigit():
-            data.timestamp = data.timestamp.replace(day=int(sys.argv[1]))
+    token = login()
+    HEADERS["Authorization"] = token
+
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        data.timestamp = data.timestamp.replace(day=int(sys.argv[1]))
     
-    for i in range (0, 24):
+    for i in range(24):
         lower = random.uniform(21, 22.5)
         upper = random.uniform(22.5, 24.5)
         temp = random.uniform(lower, upper)
@@ -57,9 +75,15 @@ def main():
         data.timestamp = data.timestamp.replace(hour=i)
         temps.append(dataclasses.asdict(data))
 
+    send_request = lambda: requests.post(CREATE_ROUTE, headers=HEADERS, data=json.dumps(temps, cls=DateTimeEncoder))
 
-    r = requests.post(ROUTE, headers=HEADERS, data=json.dumps(temps, cls=DateTimeEncoder))
-    print(r.text)
+    response = send_request()
+    if response.status_code == 401:
+        print("Unauthorized error: token is invalid. Re-logging in...")
+        token = login()
+        HEADERS["Authorization"] = token
+        response = send_request()
+    print(response.text)
 
 if __name__ == "__main__":
     main()
