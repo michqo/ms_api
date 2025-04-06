@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 
 class Station(models.Model):
     name = models.CharField(max_length=255)
@@ -15,7 +16,7 @@ class Station(models.Model):
 
 class Measurement(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=now)
     temperature = models.FloatField()
     humidity = models.FloatField()
     pressure = models.FloatField()
