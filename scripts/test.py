@@ -12,13 +12,13 @@ dotenv_path = os.path.join(os.getcwd(), ".env")
 load_dotenv(dotenv_path)
 
 URL = os.getenv('URL', 'http://localhost:8000')
-USERNAME = os.getenv('USERNAME')
-PASSWORD = os.getenv('PASSWORD')
+USERNAME = os.getenv('SCRIPT_USERNAME')
+PASSWORD = os.getenv('SCRIPT_PASSWORD')
 STATION_ID = os.getenv('STATION_ID') or 1
 TOKEN = os.getenv("TOKEN")
 
 CREATE_ROUTE = f"{URL}/api/measurements/bulk-create/"
-AUTH_URL = f"{URL}/auth/jwt/create"
+AUTH_URL = f"{URL}/auth/jwt/create/"
 
 def login(relogin: bool = False):
     if TOKEN and not relogin:
@@ -80,7 +80,7 @@ def main():
     response = send_request()
     if response.status_code == 401:
         print("Unauthorized error: token is invalid. Re-logging in...")
-        token = login()
+        token = login(relogin=True)
         HEADERS["Authorization"] = token
         response = send_request()
     print(response.text)

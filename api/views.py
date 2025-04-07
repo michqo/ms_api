@@ -155,7 +155,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             current_date -= timedelta(days=1)
         return Response(MeasurementStatSerializer(stats_list, many=True).data)
 
-class ForecastViewSet(viewsets.ViewSet):
+class ForecastViewSet(viewsets.GenericViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
