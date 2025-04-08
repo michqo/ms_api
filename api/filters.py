@@ -1,5 +1,8 @@
 from django_filters import rest_framework as filters
 from .models import Measurement, Station, MeasurementStat
+import datetime
+from django.utils import timezone
+from .models import Measurement
 
 class StationFilter(filters.FilterSet):
     class Meta:
@@ -19,6 +22,13 @@ class StationFilter(filters.FilterSet):
         return parent.filter(user=user)
 
 class MeasurementFilter(filters.FilterSet):
+    timestamp_date = filters.DateFilter(method="filter_timestamp_date", label="Measurements for Specific Day (YYYY-MM-DD)")
+
+    def filter_timestamp_date(self, queryset, _name, value):
+        start = datetime.datetime.combine(value, datetime.time.min, tzinfo=timezone.get_current_timezone())
+        end = datetime.datetime.combine(value, datetime.time.max, tzinfo=timezone.get_current_timezone())
+        return queryset.filter(timestamp__gte=start, timestamp__lte=end)
+
     class Meta:
         model = Measurement
         fields = {
@@ -27,10 +37,6 @@ class MeasurementFilter(filters.FilterSet):
             'timestamp': ['lt', 'gt'],
             'temperature': ['lt', 'gt'],
             'humidity': ['lt', 'gt'],
-            'pressure': ['lt', 'gt'],
-            'rain': ['lt', 'gt'],
-            'wind_speed': ['lt', 'gt'],
-            'wind_direction': ['lt', 'gt'],
         }
 
 class MeasurementStatFilter(filters.FilterSet):

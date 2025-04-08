@@ -19,10 +19,6 @@ class Measurement(models.Model):
     timestamp = models.DateTimeField(default=now)
     temperature = models.FloatField()
     humidity = models.FloatField()
-    pressure = models.FloatField()
-    rain = models.FloatField()
-    wind_speed = models.FloatField()
-    wind_direction = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,7 +55,6 @@ class MeasurementStat(models.Model):
     station = models.ForeignKey('Station', on_delete=models.CASCADE)
     temperature = models.FloatField(null=True, blank=True)
     humidity = models.FloatField(null=True, blank=True)
-    pressure = models.FloatField(null=True, blank=True)
     date = models.DateTimeField()  # changed from DateField to DateTimeField
     created_at = models.DateTimeField(auto_now_add=True)
     
