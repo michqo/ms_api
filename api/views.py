@@ -137,19 +137,17 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             start = datetime.combine(current_date, time.min)
             end = datetime.combine(current_date, time.max)
             measurements = Measurement.objects.filter(station=station, timestamp__gte=start, timestamp__lte=end)
-            if measurements.count() > 1:
+            if (current_date == today and measurements.count() > 0) or measurements.count() > 1:
                 stat, created = MeasurementStat.objects.get_or_create(
                     station=station, date=datetime.combine(current_date, time.min)
                 )
                 if current_date == today or created:
                     aggregates = measurements.aggregate(
-                    temperature=Avg("temperature"),
-                    humidity=Avg("humidity"),
-                    pressure=Avg("pressure"),
+                        temperature=Avg("temperature"),
+                        humidity=Avg("humidity"),
                     )
                     stat.temperature = aggregates["temperature"]
                     stat.humidity = aggregates["humidity"]
-                    stat.pressure = aggregates["pressure"]
                     stat.save()
                 stats_list.append(stat)
             current_date -= timedelta(days=1)
