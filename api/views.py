@@ -194,6 +194,10 @@ class ForecastViewSet(viewsets.GenericViewSet):
             data = response.json()
             lat = data['metadata']['latitude']
             lon = data['metadata']['longitude']
+            if lat != station.latitude or lon != station.longitude:
+                station.latitude = lat
+                station.longitude = lon
+                station.save()
             city_name = coords_to_city_name(lat, lon)
             meteoblue_data = ForecastData.objects.create(
                 latitude=lat,
