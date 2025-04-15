@@ -1,3 +1,4 @@
+from django import views
 from api.filters import MeasurementFilter, StationFilter, MeasurementStatFilter  # added MeasurementStatFilter
 from api.permissions import IsOwner
 from .models import Measurement, ForecastData, Station, MeasurementStat  # added MeasurementStat
@@ -40,12 +41,30 @@ def coords_to_city_name(lat, lon):
         else:
             return ""
 
-class StationViewSet(viewsets.ModelViewSet):
+class PermissionMixin(viewsets.GenericViewSet):
+    unauthorized_actions = [
+        'list',
+        'retrieve',
+        'latest_measurement',
+        'stats'
+    ]
+
+    def get_permissions(self):
+        if self.action in self.unauthorized_actions:
+            return []
+        return [permission() for permission in getattr(self, 'permission_classes', [])]
+
+class StationViewSet(PermissionMixin, viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsOwner]
     queryset = Station.objects.all()
     serializer_class = StationSerializer
     filterset_class = StationFilter
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == 'list' and self.request.user.is_authenticated:
+            queryset = queryset.filter(user=self.request.user)
+        return queryset
 
     def update_city_name(self, instance):
         instance.city_name = coords_to_city_name(instance.latitude, instance.longitude)
@@ -63,15 +82,13 @@ class ForecastPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 30
 
-class MeasurementViewSet(viewsets.ModelViewSet):
+class MeasurementViewSet(PermissionMixin, viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
     filterset_class = MeasurementFilter
     pagination_class = ForecastPagination
-
-    
 
     @action(detail=False, methods=['delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
@@ -153,7 +170,7 @@ class MeasurementViewSet(viewsets.ModelViewSet):
             current_date -= timedelta(days=1)
         return Response(MeasurementStatSerializer(stats_list, many=True).data)
 
-class ForecastViewSet(viewsets.GenericViewSet):
+class ForecastViewSet(PermissionMixin, viewsets.GenericViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 

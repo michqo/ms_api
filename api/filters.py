@@ -15,12 +15,6 @@ class StationFilter(filters.FilterSet):
             'created_at': ['lt', 'gt'],
         }
 
-    @property
-    def qs(self):
-        parent = super().qs
-        user = getattr(self.request, 'user', None)
-        return parent.filter(user=user)
-
 class MeasurementFilter(filters.FilterSet):
     timestamp_date = filters.DateFilter(method="filter_timestamp_date", label="Measurements for Specific Day (YYYY-MM-DD)")
 
